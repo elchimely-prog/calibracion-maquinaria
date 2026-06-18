@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Calibración de Maquinaria — Montichely</title>
+<style>
+  :root{
+    --mono:ui-monospace,"SF Mono","Cascadia Mono","Roboto Mono",Consolas,monospace;
+    --sans:-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --radius:10px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;background:#1E1D1A;}
+  body{font-family:var(--sans);}
+
+  .shell{
+    background:#23211D;padding:14px 16px 0;position:sticky;top:0;z-index:10;
+  }
+  .shell-inner{max-width:640px;margin:0 auto;}
+  .eyebrow{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:#A7A18D;font-weight:700;margin:0 0 4px;}
+  .shell h1{font-size:19px;margin:0 0 12px;font-weight:700;letter-spacing:-0.01em;color:#F4F2EA;}
+  .main-tabs{display:flex;gap:6px;}
+  .main-tab-btn{
+    flex:1;padding:11px 6px;border-radius:8px 8px 0 0;border:none;background:#2C2A25;
+    color:#B9B4A4;font-family:var(--sans);font-weight:700;font-size:13.5px;cursor:pointer;
+  }
+  .main-tab-btn:focus-visible{outline:2px solid #F4F2EA;outline-offset:2px;}
+  .main-tab-btn[data-tab="fert"].active{background:#4F6B3A;color:#FBFAF6;}
+  .main-tab-btn[data-tab="fum"].active{background:#1F6F78;color:#FBFDFC;}
+  .main-tab-btn[data-tab="semb"].active{background:#A8742A;color:#FCFAF4;}
+
+  main#app{min-height:100vh;padding-bottom:48px;background-size:24px 24px;}
+  main#app.theme-fert{
+    --accent:#4F6B3A;--accent-soft:#E3EAD9;--bg:#E7EAE2;--grid:rgba(32,38,28,.07);
+    --ink:#20261F;--ink-soft:#52594B;--surface:#FBFAF6;--surface-border:rgba(32,38,28,.14);
+  }
+  main#app.theme-fum{
+    --accent:#1F6F78;--accent-soft:#DCEFEF;--bg:#E3EBEA;--grid:rgba(20,40,42,.07);
+    --ink:#15292B;--ink-soft:#4C6264;--surface:#FBFDFC;--surface-border:rgba(20,40,42,.14);
+  }
+  main#app.theme-semb{
+    --accent:#A8742A;--accent-soft:#F1E3C7;--bg:#EDE7DA;--grid:rgba(50,38,12,.07);
+    --ink:#2B2210;--ink-soft:#5C5238;--surface:#FCFAF4;--surface-border:rgba(50,38,12,.14);
+  }
+  main#app{
+    background-color:var(--bg);
+    background-image:linear-gradient(var(--grid) 1px,transparent 1px),linear-gradient(90deg,var(--grid) 1px,transparent 1px);
+    color:var(--ink);
+  }
+
+  .wrap{max-width:640px;margin:0 auto;padding:18px 16px 0;}
+  .panel{display:none;}
+  .panel.active{display:block;}
+
+  .segmented{display:flex;gap:8px;margin-bottom:18px;}
+  .segmented.cols-4{display:grid;grid-template-columns:1fr 1fr;}
+  .seg-btn{
+    flex:1;padding:11px 8px;border-radius:var(--radius);
+    border:1.5px solid var(--surface-border);background:var(--surface);
+    font-family:var(--sans);font-size:14.5px;font-weight:600;color:var(--ink-soft);
+    cursor:pointer;transition:background .15s,color .15s,border-color .15s;
+  }
+  .seg-btn.active{background:var(--accent);color:var(--surface);border-color:var(--accent);}
+  .seg-btn:focus-visible{outline:2px solid var(--accent);outline-offset:2px;}
+
+  .card{background:var(--surface);border:1px solid var(--surface-border);border-radius:var(--radius);padding:16px;margin-bottom:18px;}
+  .card h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 14px;font-weight:700;}
+  .param-row{display:flex;align-items:center;justify-content:space-between;padding:9px 0;border-bottom:1px solid var(--surface-border);gap:10px;}
+  .param-row:last-child{border-bottom:none;}
+  .param-label{font-size:14.5px;color:var(--ink);flex:1;min-width:0;}
+  .stepper{display:flex;align-items:center;gap:6px;flex-shrink:0;}
+  .stepper button{
+    width:30px;height:30px;border-radius:8px;border:1px solid var(--surface-border);
+    background:#fff;color:var(--accent);font-size:17px;font-weight:700;line-height:1;
+    cursor:pointer;display:flex;align-items:center;justify-content:center;
+  }
+  .stepper button:active{background:var(--accent-soft);}
+  .stepper input{
+    width:78px;text-align:center;font-family:var(--mono);font-size:15px;font-weight:600;
+    border:1px solid var(--surface-border);border-radius:8px;padding:6px 4px;color:var(--ink);background:#fff;
+  }
+  .stepper input:focus-visible{outline:2px solid var(--accent);outline-offset:1px;}
+  .unit{font-size:11.5px;color:var(--ink-soft);width:62px;flex-shrink:0;text-align:right;}
+
+  .reset-btn{display:block;margin:0 auto 4px;background:none;border:none;color:var(--ink-soft);font-size:12.5px;text-decoration:underline;cursor:pointer;font-family:var(--sans);padding:6px;}
+
+  .strip-section h2{font-size:13px;letter-spacing:.08em;text-transform:uppercase;color:var(--ink-soft);margin:0 0 10px;font-weight:700;}
+  .strip{display:flex;gap:10px;overflow-x:auto;padding:4px 2px 14px;scroll-snap-type:x proximate;-webkit-overflow-scrolling:touch;}
+  .strip::-webkit-scrollbar{height:6px;}
+  .strip::-webkit-scrollbar-thumb{background:var(--surface-border);border-radius:4px;}
+  .vuelta-card{
+    scroll-snap-align:start;flex:0 0 142px;background:var(--surface);
+    border:1px solid var(--surface-border);border-left:4px solid var(--accent);
+    border-radius:var(--radius);padding:12px 12px 14px;position:relative;
+  }
+  .vuelta-card.done{background:var(--accent-soft);}
+  .vuelta-num{font-family:var(--mono);font-size:26px;font-weight:700;color:var(--accent);line-height:1;}
+  .vuelta-num span{font-size:11px;font-weight:600;color:var(--ink-soft);margin-left:4px;}
+  .metric{margin-top:9px;}
+  .metric .m-label{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);}
+  .metric .m-value{font-family:var(--mono);font-size:15.5px;font-weight:700;color:var(--ink);}
+  .metric .m-value small{font-size:11px;font-weight:500;color:var(--ink-soft);}
+  .badge{
+    position:absolute;top:-9px;right:8px;background:var(--accent);color:var(--surface);
+    font-size:9.5px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:3px 7px;border-radius:6px;
+  }
+
+  .summary-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px;}
+  .summary-cell{background:var(--surface);border:1px solid var(--surface-border);border-left:4px solid var(--accent);border-radius:var(--radius);padding:12px;}
+  .summary-cell .s-label{font-size:10.5px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink-soft);}
+  .summary-cell .s-value{font-family:var(--mono);font-size:19px;font-weight:700;color:var(--ink);margin-top:3px;}
+  .summary-cell .s-value small{font-size:11.5px;font-weight:500;color:var(--ink-soft);}
+  .summary-cell.wide{grid-column:1 / -1;}
+  .summary-cell.highlight{background:var(--accent-soft);}
+
+  .note{
+    background:var(--accent-soft);border:1px dashed var(--accent);border-radius:8px;
+    padding:10px 12px;font-size:12.5px;color:var(--ink);margin-bottom:18px;line-height:1.5;
+  }
+
+  footer.foot{max-width:640px;margin:6px auto 0;padding:0 16px 24px;color:var(--ink-soft);font-size:12px;line-height:1.5;}
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <div class="shell-inner">
+    <p class="eyebrow">Sociedad Agrícola Montichely</p>
+    <h1>Calibración de maquinaria</h1>
+    <div class="main-tabs">
+      <button class="main-tab-btn active" data-tab="fert">Fertilización</button>
+      <button class="main-tab-btn" data-tab="fum">Fumigación</button>
+      <button class="main-tab-btn" data-tab="semb">Sembradora</button>
+    </div>
+  </div>
+</div>
+
+<main id="app" class="theme-fert">
+  <div class="wrap">
+
+    <!-- PANEL FERTILIZACIÓN -->
+    <section class="panel active" id="panel-fert">
+      <div class="segmented" role="tablist" aria-label="Equipo">
+        <button class="seg-btn active" data-group="fert" data-tipo="pulpo" role="tab" aria-selected="true">Pulpo</button>
+        <button class="seg-btn" data-group="fert" data-tipo="voleadora" role="tab" aria-selected="false">Voleadora</button>
+      </div>
+      <section class="card"><h2>Parámetros</h2><div id="params-fert"></div></section>
+      <button class="reset-btn" data-group="fert">Restablecer valores de referencia</button>
+      <section class="strip-section">
+        <h2>Resultado por vuelta</h2>
+        <div class="strip" id="strip-fert"></div>
+      </section>
+      <footer class="foot">
+        1 vuelta cubre el ancho de surco × N° de surcos, ida y vuelta sobre el largo de la tabla.
+        "Por bote" reparte la carga de la vuelta en 4 partes iguales.
+      </footer>
+    </section>
+
+    <!-- PANEL FUMIGACIÓN -->
+    <section class="panel" id="panel-fum">
+      <div class="segmented" role="tablist" aria-label="Tipo de aplicación">
+        <button class="seg-btn active" data-group="fum" data-tipo="herbicidas" role="tab" aria-selected="true">Herbicidas</button>
+        <button class="seg-btn" data-group="fum" data-tipo="agroquimicos" role="tab" aria-selected="false">Agroquímicos</button>
+      </div>
+      <section class="card"><h2>Parámetros</h2><div id="params-fum"></div></section>
+      <button class="reset-btn" data-group="fum">Restablecer valores de referencia</button>
+      <section class="summary-grid" id="summary-fum"></section>
+      <section class="strip-section">
+        <h2>Avance por vuelta</h2>
+        <div class="strip" id="strip-fum"></div>
+      </section>
+      <footer class="foot">
+        Cada vuelta cubre 2 entradas (ida y vuelta) sobre el largo de tabla. La vuelta marcada
+        "cubre el área" es la primera que alcanza o supera el área deseada.
+      </footer>
+    </section>
+
+    <!-- PANEL SEMBRADORA -->
+    <section class="panel" id="panel-semb">
+      <div class="segmented cols-4" role="tablist" aria-label="Cultivo">
+        <button class="seg-btn active" data-group="semb" data-tipo="trigo" role="tab" aria-selected="true">Trigo</button>
+        <button class="seg-btn" data-group="semb" data-tipo="cebada" role="tab" aria-selected="false">Cebada</button>
+        <button class="seg-btn" data-group="semb" data-tipo="maiz" role="tab" aria-selected="false">Maíz</button>
+        <button class="seg-btn" data-group="semb" data-tipo="sorgo" role="tab" aria-selected="false">Sorgo</button>
+      </div>
+      <div class="note" id="note-semb" style="display:none;">
+        En maíz, la semilla se mide en semillas por hectárea, no en kg. El valor de fábrica
+        (90,000 semillas/ha) es un punto de partida dentro de tu rango de 60,000 a 130,000 — ajústalo
+        a la densidad real que siembras.
+      </div>
+      <section class="card"><h2>Parámetros</h2><div id="params-semb"></div></section>
+      <button class="reset-btn" data-group="semb">Restablecer valores de referencia</button>
+      <section class="strip-section">
+        <h2>Resultado por vuelta</h2>
+        <div class="strip" id="strip-semb"></div>
+      </section>
+      <footer class="foot">
+        1 vuelta cubre el ancho de surco × N° de surcos, ida y vuelta sobre el largo de la tabla.
+        Semilla y abono se calculan sobre esa misma área.
+      </footer>
+    </section>
+
+  </div>
+</main>
+
+<script>
+function fmt(n, dec){
+  return n.toLocaleString("es-MX",{minimumFractionDigits:dec,maximumFractionDigits:dec});
+}
+
+function renderParamRows(containerId, idPrefix, labelsMeta, valuesObj, onChange){
+  const cont = document.getElementById(containerId);
+  cont.innerHTML = "";
+  Object.keys(labelsMeta).forEach(key=>{
+    const meta = labelsMeta[key];
+    const row = document.createElement("div");
+    row.className = "param-row";
+    row.innerHTML = `
+      <div class="param-label">${meta.label}</div>
+      <div class="stepper">
+        <button type="button" data-key="${key}" data-dir="-1" aria-label="Disminuir ${meta.label}">−</button>
+        <input type="number" inputmode="decimal" id="${idPrefix}-${key}" value="${valuesObj[key]}" step="${meta.step}">
+        <button type="button" data-key="${key}" data-dir="1" aria-label="Aumentar ${meta.label}">+</button>
+      </div>
+      <div class="unit">${meta.unit}</div>
+    `;
+    cont.appendChild(row);
+  });
+  cont.querySelectorAll("button[data-key]").forEach(btn=>{
+    btn.addEventListener("click", ()=>{
+      const key = btn.dataset.key;
+      const dir = parseFloat(btn.dataset.dir);
+      const meta = labelsMeta[key];
+      let v = valuesObj[key] + dir*meta.step;
+      if(v < meta.min) v = meta.min;
+      v = Math.round(v*1000)/1000;
+      valuesObj[key] = v;
+      document.getElementById(`${idPrefix}-${key}`).value = v;
+      onChange();
+    });
+  });
+  Object.keys(labelsMeta).forEach(key=>{
+    document.getElementById(`${idPrefix}-${key}`).addEventListener("input", e=>{
+      const v = parseFloat(e.target.value);
+      valuesObj[key] = isNaN(v) ? 0 : v;
+      onChange();
+    });
+  });
+}
+
+/* ---------- FERTILIZACIÓN ---------- */
+const fertDEFAULTS = {
+  pulpo:     { ancho:1, surcos:6, largo:519, kgha:300 },
+  voleadora: { ancho:1, surcos:6, largo:519, kgha:300 }
+};
+const fertLABELS = {
+  ancho: { label:"Ancho de surco",  unit:"mt",    step:0.05, min:0 },
+  surcos:{ label:"N° de surcos",    unit:"",      step:1,    min:1 },
+  largo: { label:"Largo de tabla",  unit:"mt",    step:1,    min:0 },
+  kgha:  { label:"Kg por hectárea", unit:"kg/ha", step:5,    min:0 }
+};
+const FERT_N_VUELTAS = 8;
+let fertTipo = "pulpo";
+let fertVal = { ...fertDEFAULTS.pulpo };
+
+function renderFertParams(){
+  renderParamRows("params-fert", "in-fert", fertLABELS, fertVal, renderFertStrip);
+}
+function renderFertStrip(){
+  const strip = document.getElementById("strip-fert");
+  strip.innerHTML = "";
+  const { ancho, surcos, largo, kgha } = fertVal;
+  const areaVuelta = ancho * surcos * largo * 2;
+  const kgVuelta = areaVuelta * kgha / 10000;
+  const porBoteVuelta = kgVuelta / 4;
+  for(let n=1;n<=FERT_N_VUELTAS;n++){
+    const card = document.createElement("div");
+    card.className = "vuelta-card";
+    card.innerHTML = `
+      <div class="vuelta-num">${n}<span>vta${n>1?"s":""}</span></div>
+      <div class="metric"><div class="m-label">Kg acumulados</div><div class="m-value">${fmt(kgVuelta*n,1)} <small>kg</small></div></div>
+      <div class="metric"><div class="m-label">Por bote</div><div class="m-value">${fmt(porBoteVuelta*n,1)} <small>kg</small></div></div>
+    `;
+    strip.appendChild(card);
+  }
+}
+
+/* ---------- FUMIGACIÓN ---------- */
+const fumDEFAULTS = {
+  herbicidas:   { boquillas:20, sep:0.5, ancho:1, area:2, largo:521, litros:600 },
+  agroquimicos: { boquillas:10, sep:1,   ancho:1, area:2, largo:300, litros:600 }
+};
+const fumLABELS = {
+  boquillas:{ label:"N° de boquillas",      unit:"",   step:1,    min:1 },
+  sep:      { label:"Separación boquilla",  unit:"mt", step:0.05, min:0 },
+  ancho:    { label:"Ancho de surco",       unit:"mt", step:0.05, min:0 },
+  largo:    { label:"Largo de tabla",       unit:"mt", step:1,    min:0 },
+  litros:   { label:"Capacidad del tanque", unit:"lt", step:10,   min:0 },
+  area:     { label:"Área deseada",         unit:"ha", step:0.5,  min:0 }
+};
+let fumTipo = "herbicidas";
+let fumVal = { ...fumDEFAULTS.herbicidas };
+
+function renderFumParams(){
+  renderParamRows("params-fum", "in-fum", fumLABELS, fumVal, renderFumResults);
+}
+function renderFumResults(){
+  const { boquillas, sep, ancho, largo, litros, area } = fumVal;
+  const numSurcos = ancho>0 ? (boquillas*sep/ancho) : 0;
+  const entradaM2 = boquillas*sep*largo;
+  const litrosEntrada = entradaM2>0 ? (entradaM2*litros/20000) : 0;
+  const gastoVueltaM2 = entradaM2*2;
+  const gastoVueltaLitros = litrosEntrada*2;
+  const totalEntradas = entradaM2>0 ? (area*10000/entradaM2) : 0;
+  const vueltasNecesarias = totalEntradas/2;
+  const vueltasRedondeo = Math.max(1, Math.ceil(vueltasNecesarias || 0));
+
+  document.getElementById("summary-fum").innerHTML = `
+    <div class="summary-cell"><div class="s-label">N° de surcos</div><div class="s-value">${fmt(numSurcos,1)}</div></div>
+    <div class="summary-cell"><div class="s-label">1 entrada</div><div class="s-value">${fmt(entradaM2,0)} <small>m²</small></div></div>
+    <div class="summary-cell"><div class="s-label">Gasto por vuelta</div><div class="s-value">${fmt(gastoVueltaLitros,1)} <small>lt</small></div></div>
+    <div class="summary-cell"><div class="s-label">Litros por entrada</div><div class="s-value">${fmt(litrosEntrada,1)} <small>lt</small></div></div>
+    <div class="summary-cell wide highlight"><div class="s-label">Vueltas necesarias para ${fmt(area,1)} ha</div><div class="s-value">${fmt(vueltasNecesarias,1)} <small>vueltas</small></div></div>
+  `;
+
+  const strip = document.getElementById("strip-fum");
+  strip.innerHTML = "";
+  let yaMarcado = false;
+  for(let n=1;n<=vueltasRedondeo;n++){
+    const areaAcumHa = gastoVueltaM2*n/10000;
+    const litrosAcum = gastoVueltaLitros*n;
+    const cubre = !yaMarcado && areaAcumHa >= area;
+    if(cubre) yaMarcado = true;
+    const card = document.createElement("div");
+    card.className = "vuelta-card" + (cubre ? " done" : "");
+    card.innerHTML = `
+      ${cubre ? '<div class="badge">Cubre el área</div>' : ""}
+      <div class="vuelta-num">${n}<span>vta${n>1?"s":""}</span></div>
+      <div class="metric"><div class="m-label">Área cubierta</div><div class="m-value">${fmt(areaAcumHa,2)} <small>ha</small></div></div>
+      <div class="metric"><div class="m-label">Litros gastados</div><div class="m-value">${fmt(litrosAcum,1)} <small>lt</small></div></div>
+    `;
+    strip.appendChild(card);
+  }
+}
+
+/* ---------- SEMBRADORA ---------- */
+const sembDEFAULTS = {
+  trigo:  { ancho:2.25, surcos:1, largo:603, abono:350, semilla:170 },
+  cebada: { ancho:2.25, surcos:1, largo:603, abono:350, semilla:170 },
+  maiz:   { ancho:0.75, surcos:4, largo:567, abono:500, semilla:90000 },
+  sorgo:  { ancho:0.75, surcos:4, largo:300, abono:400, semilla:20 }
+};
+const SEED_FIELD = {
+  trigo:  { label:"Semilla por hectárea",  unit:"kg/ha",       step:0.1,  mode:"kg" },
+  cebada: { label:"Semilla por hectárea",  unit:"kg/ha",       step:0.1,  mode:"kg" },
+  maiz:   { label:"Semillas por hectárea", unit:"semillas/ha", step:1000, mode:"count" },
+  sorgo:  { label:"Semilla por hectárea",  unit:"kg/ha",       step:0.1,  mode:"kg" }
+};
+const SEMB_N_VUELTAS = 12;
+let sembTipo = "trigo";
+let sembVal = { ...sembDEFAULTS.trigo };
+
+function getSembLabels(tipo){
+  const seed = SEED_FIELD[tipo];
+  return {
+    ancho:  { label:"Ancho de surco",       unit:"mt",   step:0.05, min:0 },
+    surcos: { label:"N° de surcos",         unit:"",     step:1,    min:1 },
+    largo:  { label:"Largo de tabla",       unit:"mt",   step:1,    min:0 },
+    abono:  { label:"Abono por hectárea",   unit:"kg/ha",step:5,    min:0 },
+    semilla:{ label:seed.label,             unit:seed.unit, step:seed.step, min:0 }
+  };
+}
+function renderSembParams(){
+  document.getElementById("note-semb").style.display = (sembTipo === "maiz") ? "block" : "none";
+  renderParamRows("params-semb", "in-semb", getSembLabels(sembTipo), sembVal, renderSembStrip);
+}
+function renderSembStrip(){
+  const { ancho, surcos, largo, abono, semilla } = sembVal;
+  const areaBase = ancho * surcos * largo * 2;
+  const semillaVuelta = areaBase * semilla / 10000;
+  const abonoVuelta = areaBase * abono / 10000;
+  const mode = SEED_FIELD[sembTipo].mode;
+  const strip = document.getElementById("strip-semb");
+  strip.innerHTML = "";
+  for(let n=1;n<=SEMB_N_VUELTAS;n++){
+    const semillaTotal = semillaVuelta*n;
+    const semillaDisplay = mode === "count" ? fmt(Math.round(semillaTotal),0) : fmt(semillaTotal,2);
+    const semillaUnit = mode === "count" ? "semillas" : "kg";
+    const abonoBoteRow = sembTipo === "maiz"
+      ? `<div class="metric"><div class="m-label">Abono por bote</div><div class="m-value">${fmt(abonoVuelta*n/4,1)} <small>kg</small></div></div>`
+      : "";
+    const card = document.createElement("div");
+    card.className = "vuelta-card";
+    card.innerHTML = `
+      <div class="vuelta-num">${n}<span>vta${n>1?"s":""}</span></div>
+      <div class="metric"><div class="m-label">Semilla</div><div class="m-value">${semillaDisplay} <small>${semillaUnit}</small></div></div>
+      <div class="metric"><div class="m-label">Abono</div><div class="m-value">${fmt(abonoVuelta*n,1)} <small>kg</small></div></div>
+      ${abonoBoteRow}
+      <div class="metric"><div class="m-label">Área</div><div class="m-value">${fmt(areaBase*n,0)} <small>m²</small></div></div>
+    `;
+    strip.appendChild(card);
+  }
+}
+
+/* ---------- NAVEGACIÓN PRINCIPAL ---------- */
+document.querySelectorAll(".main-tab-btn").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    const tab = btn.dataset.tab;
+    document.querySelectorAll(".main-tab-btn").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    document.querySelectorAll(".panel").forEach(p=>p.classList.remove("active"));
+    document.getElementById(`panel-${tab}`).classList.add("active");
+    document.getElementById("app").className = `theme-${tab}`;
+  });
+});
+
+/* ---------- SELECTORES DE SUBTIPO ---------- */
+document.querySelectorAll('.seg-btn[data-group="fert"]').forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll('.seg-btn[data-group="fert"]').forEach(b=>{b.classList.remove("active");b.setAttribute("aria-selected","false");});
+    btn.classList.add("active"); btn.setAttribute("aria-selected","true");
+    fertTipo = btn.dataset.tipo;
+    fertVal = { ...fertDEFAULTS[fertTipo] };
+    renderFertParams(); renderFertStrip();
+  });
+});
+document.querySelectorAll('.seg-btn[data-group="fum"]').forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll('.seg-btn[data-group="fum"]').forEach(b=>{b.classList.remove("active");b.setAttribute("aria-selected","false");});
+    btn.classList.add("active"); btn.setAttribute("aria-selected","true");
+    fumTipo = btn.dataset.tipo;
+    fumVal = { ...fumDEFAULTS[fumTipo] };
+    renderFumParams(); renderFumResults();
+  });
+});
+document.querySelectorAll('.seg-btn[data-group="semb"]').forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll('.seg-btn[data-group="semb"]').forEach(b=>{b.classList.remove("active");b.setAttribute("aria-selected","false");});
+    btn.classList.add("active"); btn.setAttribute("aria-selected","true");
+    sembTipo = btn.dataset.tipo;
+    sembVal = { ...sembDEFAULTS[sembTipo] };
+    renderSembParams(); renderSembStrip();
+  });
+});
+
+/* ---------- RESTABLECER ---------- */
+document.querySelectorAll(".reset-btn").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    const g = btn.dataset.group;
+    if(g === "fert"){ fertVal = { ...fertDEFAULTS[fertTipo] }; renderFertParams(); renderFertStrip(); }
+    else if(g === "fum"){ fumVal = { ...fumDEFAULTS[fumTipo] }; renderFumParams(); renderFumResults(); }
+    else if(g === "semb"){ sembVal = { ...sembDEFAULTS[sembTipo] }; renderSembParams(); renderSembStrip(); }
+  });
+});
+
+/* ---------- INICIO ---------- */
+renderFertParams(); renderFertStrip();
+renderFumParams(); renderFumResults();
+renderSembParams(); renderSembStrip();
+</script>
+</body>
+</html>
