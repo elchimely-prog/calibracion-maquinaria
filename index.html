@@ -387,12 +387,16 @@ function renderSembStrip(){
     const semillaTotal = semillaVuelta*n;
     const semillaDisplay = mode === "count" ? fmt(Math.round(semillaTotal),0) : fmt(semillaTotal,2);
     const semillaUnit = mode === "count" ? "semillas" : "kg";
+    const abonoBoteRow = sembTipo === "maiz"
+      ? `<div class="metric"><div class="m-label">Abono por bote</div><div class="m-value">${fmt(abonoVuelta*n/4,1)} <small>kg</small></div></div>`
+      : "";
     const card = document.createElement("div");
     card.className = "vuelta-card";
     card.innerHTML = `
       <div class="vuelta-num">${n}<span>vta${n>1?"s":""}</span></div>
       <div class="metric"><div class="m-label">Semilla</div><div class="m-value">${semillaDisplay} <small>${semillaUnit}</small></div></div>
       <div class="metric"><div class="m-label">Abono</div><div class="m-value">${fmt(abonoVuelta*n,1)} <small>kg</small></div></div>
+      ${abonoBoteRow}
       <div class="metric"><div class="m-label">Área</div><div class="m-value">${fmt(areaBase*n,0)} <small>m²</small></div></div>
     `;
     strip.appendChild(card);
