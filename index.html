@@ -244,10 +244,10 @@ function renderParamRows(containerId,idPrefix,labelsMeta,valuesObj,onChange){
 
 /* ---- SEMBRADORA ---- */
 const sembDEF={
-  maiz:  {ancho:0.75,surcos:4,largo:567,abono:500,semilla:90000},
-  sorgo: {ancho:0.75,surcos:4,largo:300,abono:400,semilla:20},
-  trigo: {ancho:2.25,surcos:1,largo:603,abono:350,semilla:170},
-  cebada:{ancho:2.25,surcos:1,largo:603,abono:350,semilla:170}
+  maiz:  {ancho:1,   surcos:4,largo:500,abono:400,semilla:90000},
+  sorgo: {ancho:0.75,surcos:4,largo:500,abono:400,semilla:20},
+  trigo: {ancho:2.25,surcos:1,largo:500,abono:400,semilla:200},
+  cebada:{ancho:2.25,surcos:1,largo:500,abono:400,semilla:200}
 };
 const SEED={
   maiz:  {label:"Semillas por hectárea",unit:"semillas/ha",step:1000,mode:"count"},
@@ -300,8 +300,8 @@ function renderSembStrip(){
 
 /* ---- FUMIGACIÓN ---- */
 const fumDEF={
-  herbicidas:   {boquillas:20,sep:0.5,ancho:1,area:2,largo:521,litros:600},
-  agroquimicos: {boquillas:10,sep:1,  ancho:1,area:2,largo:300,litros:600}
+  herbicidas:   {boquillas:20,sep:0.5,ancho:1,area:2,largo:500,litros:600},
+  agroquimicos: {boquillas:10,sep:1,  ancho:1,area:2,largo:500,litros:600}
 };
 const fumLABELS={
   boquillas:{label:"N° de boquillas",     unit:"",  step:1,   min:1},
@@ -355,8 +355,8 @@ function renderFumResults(){
 
 /* ---- FERTILIZACIÓN ---- */
 const fertDEF={
-  voleadora:{ancho:1,surcos:6,largo:519,kgha:300},
-  pulpo:    {ancho:1,surcos:6,largo:519,kgha:300}
+  voleadora:{ancho:1,surcos:6,largo:520,kgha:300},
+  pulpo:    {ancho:1,surcos:6,largo:500,kgha:300}
 };
 const fertLABELS={
   ancho: {label:"Ancho de surco",  unit:"mt",   step:0.05,min:0},
